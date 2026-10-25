@@ -1,7 +1,3 @@
-import pypandoc
-
-readme = r"""# FastAPI — Beginner's Guide (Lecture 1 & 2)
-
 Beginner-friendly notes for learning FastAPI, building simple REST APIs, reading JSON files, and testing endpoints.
 
 > **Note:** These notes cover foundational FastAPI concepts and a patient JSON API example. They are not a verified word-for-word transcript of the two linked videos. Add video transcripts/captions if you need exact, timestamped notes from each lecture.
