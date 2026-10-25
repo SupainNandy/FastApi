@@ -1,116 +1,91 @@
-# FastAPI Learning — Python Backend Development
+# FastAPI Fundamentals — Lecture 1
 
-A hands-on journey into **FastAPI and REST API development using Python**. This repository contains practical examples, beginner-friendly code, and step-by-step exercises covering API fundamentals, JSON data handling, path parameters, query parameters, exception handling, and data sorting.
+A beginner-friendly introduction to FastAPI, covering environment setup, creating REST API endpoints, reading JSON data, handling path and query parameters, and sorting records.
 
-The goal is to build a strong foundation in backend development by implementing concepts through small, working examples.
+## Topics Covered
 
-## Tech Stack
+- FastAPI installation and project setup
+- Creating a FastAPI application
+- Defining GET endpoints
+- Reading data from a JSON file
+- Path parameters using `Path()`
+- Query parameters using `Query()`
+- Handling errors with `HTTPException`
+- Sorting patient records dynamically
 
-- **Python** — Programming language
-- **FastAPI** — Web framework for building REST APIs
-- **Uvicorn** — ASGI server for running the application
-- **JSON** — File-based data storage for learning API operations
-- **Git & GitHub** — Version control and project management
+## 1. Project Setup
 
-## Project Structure
-
-```text
-fastApi/
-├── 1_Lecture/
-│   ├── main.py
-│   └── patient.json
-├── README.md
-└── ...
-```
-
-The structure above illustrates the current learning module. Other lecture folders may contain additional examples as the repository grows.
-
-## Getting Started
-
-### 1. Clone the Repository
+### Create a virtual environment
 
 ```bash
-git clone https://github.com/SupainNandy/fastApi.git
-cd fastApi
+python3 -m venv myenv
 ```
 
-### 2. Navigate to the Learning Directory
-
-```bash
-cd 1_Lecture
-```
-
-### 3. Create a Virtual Environment
+### Activate the virtual environment
 
 **Ubuntu / Linux**
 
 ```bash
-python3 -m venv myenv
 source myenv/bin/activate
 ```
 
 **Windows**
 
 ```bash
-python -m venv myenv
 myenv\Scripts\activate
 ```
 
-### 4. Install Dependencies
+### Install dependencies
 
 ```bash
-python -m pip install fastapi uvicorn
+pip install fastapi uvicorn
 ```
 
-### 5. Run the Application
+## 2. Project Structure
 
-If your Python application is saved as `main.py`:
+```text
+1_Lecture/
+├── main.py
+├── patient.json
+├── README.md
+└── myenv/
+```
+
+- `main.py` — Contains the FastAPI application and API endpoints.
+- `patient.json` — Stores patient records in JSON format.
+- `README.md` — Documents the concepts covered in this lecture.
+- `myenv/` — Contains the project's virtual environment.
+
+## 3. Run the Application
+
+Start the development server using:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-The server will usually run at `http://127.0.0.1:8000`.
+Open the following URLs in your browser:
 
-## Concepts Learned
+| URL | Purpose |
+|---|---|
+| `http://127.0.0.1:8000/` | Home endpoint |
+| `http://127.0.0.1:8000/about` | About endpoint |
+| `http://127.0.0.1:8000/patient` | Fetch all patients |
+| `http://127.0.0.1:8000/docs` | Interactive API documentation |
 
-### 1. Creating a FastAPI Application
+## 4. Creating Basic API Endpoints
 
-FastAPI provides a simple way to create HTTP endpoints using Python functions and decorators.
+### Home endpoint
 
 ```python
-from fastapi import FastAPI
-
-app = FastAPI(
-    title="My First FastAPI",
-    description="My first Python API",
-    version="1.0.0"
-)
-
 @app.get("/")
 def home():
     return {"message": "FastAPI is running!"}
 ```
 
-**What I learned:**
-- Creating a FastAPI application instance.
-- Using `@app.get()` to define GET endpoints.
-- Returning Python dictionaries as JSON responses.
-- Adding a title, description, and version to API documentation.
+This endpoint returns a JSON response when a user visits the root URL.
 
-### 2. Creating Multiple GET Endpoints
-
-Different endpoints can provide different information.
-
-| Endpoint | Purpose |
-|---|---|
-| `/` | Check whether the API is running |
-| `/about` | Return project information |
-| `/patient` | Fetch all patient records |
-| `/patient/{pid}` | Fetch a patient by ID |
-| `/sort` | Sort patient records by a selected field |
-
-Example:
+### About endpoint
 
 ```python
 @app.get("/about")
@@ -121,34 +96,28 @@ def about():
     }
 ```
 
-Each endpoint has a specific responsibility, which makes an API easier to organize and understand.
+This endpoint returns basic information about the project.
 
-### 3. Reading JSON Data from a File
+## 5. Reading Data from a JSON File
 
-The project uses a `patient.json` file as its data source.
+The `load_data()` function reads patient records from `patient.json`.
 
 ```python
-import json
-from pathlib import Path
-
 def load_data():
-    file_path = Path(__file__).resolve().parent / "patient.json"
+    file_path = FilePath(__file__).resolve().parent / "patient.json"
 
     with open(file_path, "r", encoding="utf-8") as file:
         return json.load(file)
 ```
 
-**How it works:**
+### How it works
 
-- `__file__` identifies the current Python file.
-- `Path(__file__).resolve().parent` identifies its containing directory.
-- `/ "patient.json"` builds the path to the JSON file.
-- `open()` opens the file in read mode.
-- `json.load(file)` converts JSON content into Python objects, such as lists and dictionaries.
+1. `__file__` identifies the current Python file.
+2. `resolve().parent` locates the directory containing `main.py`.
+3. `open()` opens the JSON file in read mode.
+4. `json.load()` converts the JSON contents into Python objects.
 
-Using `Path` this way avoids depending on the terminal's current working directory.
-
-The patient endpoint returns the loaded records:
+The API endpoint returns the patient records:
 
 ```python
 @app.get("/patient")
@@ -156,28 +125,18 @@ def fetch_data():
     return load_data()
 ```
 
-This approach is useful for learning how an API reads and returns structured data before introducing a database.
+## 6. Path Parameters and `Path()`
 
-### 4. Path Parameters
+Path parameters allow us to retrieve a specific resource using a value included in the URL.
 
-A path parameter is a value embedded in the URL path. It is commonly used to identify one particular resource.
-
-**Example request:**
-
-```http
-GET /patient/3
-```
-
-**Implementation:**
+### Example
 
 ```python
-from fastapi import HTTPException, Path
-
 @app.get("/patient/{pid}")
 def fetch_patient_by_id(
     pid: int = Path(
         ...,
-        description="Id of the patient in the database"
+        description="ID of the patient in the database"
     )
 ):
     patients = load_data()
@@ -192,37 +151,33 @@ def fetch_patient_by_id(
     )
 ```
 
-**What I learned:**
+### How it works
 
-- `{pid}` defines a dynamic segment in the URL.
-- `pid: int` declares the expected parameter type.
-- `Path(...)` marks the parameter as required and adds documentation.
-- The loop searches the loaded patient records for a matching ID.
-- `HTTPException` returns an appropriate error if no patient matches.
+- `{pid}` represents a dynamic value in the URL.
+- `pid: int` declares that the parameter should be an integer.
+- `Path(...)` makes the parameter required and adds documentation.
+- The loop searches for a patient whose ID matches `pid`.
+- `HTTPException` returns a 404 error if the patient does not exist.
 
-If the patient exists, the endpoint returns that patient's record. Otherwise, it returns a `404 Not Found` response.
+### Test the endpoint
 
-FastAPI also validates the integer type automatically. For example, `/patient/abc` produces a validation error because `abc` is not an integer.
-
-### 5. Query Parameters
-
-Query parameters are passed after `?` in a URL. They are useful for filtering, searching, sorting, and pagination.
-
-In this project, query parameters control the sorting field and order.
-
-**Example requests:**
-
-```http
-GET /sort?sort_by=height&order=asc
-GET /sort?sort_by=weight&order=desc
-GET /sort?sort_by=bmi&order=asc
+```text
+GET /patient/1
+GET /patient/2
+GET /patient/100
 ```
 
-**Implementation:**
+The first two requests return matching records if those IDs exist. The last request returns a 404 response if patient 100 is not found.
+
+## 7. Query Parameters and `Query()`
+
+Query parameters pass additional information through the URL after a question mark (`?`).
+
+They are useful for filtering, sorting, searching, and pagination.
+
+### Example
 
 ```python
-from fastapi import Query
-
 @app.get("/sort")
 def sort_patients(
     sort_by: str = Query(
@@ -232,7 +187,7 @@ def sort_patients(
     order: str = Query(
         "asc",
         description="Sort in asc or desc order"
-    )
+    ),
 ):
     valid_fields = ["height", "weight", "bmi"]
 
@@ -259,62 +214,52 @@ def sort_patients(
     )
 ```
 
-**What I learned:**
+### Test the endpoint
 
-- `Query(...)` makes `sort_by` required.
-- `Query("asc")` sets ascending order as the default.
-- A list of valid fields prevents sorting by unsupported fields.
-- The API validates whether the requested order is `asc` or `desc`.
-- Python's `sorted()` returns a new sorted list without changing the original list.
-- `lambda` provides a compact function for selecting the sorting value.
+Sort patients by height in ascending order:
+
+```text
+http://127.0.0.1:8000/sort?sort_by=height&order=asc
+```
+
+Sort patients by weight in descending order:
+
+```text
+http://127.0.0.1:8000/sort?sort_by=weight&order=desc
+```
+
+Sort patients by BMI:
+
+```text
+http://127.0.0.1:8000/sort?sort_by=bmi
+```
+
+If `order` is omitted, the API uses `asc` by default.
+
+### Understanding `Query()`
+
+- `sort_by: str` accepts the field to sort by.
+- `Query(...)` makes `sort_by` a required parameter.
+- `order: str = Query("asc")` provides a default value.
+- `valid_fields` prevents sorting by unsupported fields.
+- `sorted()` creates a sorted list without modifying the original list.
 - `reverse=True` sorts in descending order.
 
-For example, `/sort?sort_by=height&order=desc` returns patient records ordered from greatest to smallest height.
+## 8. Understanding `Path()` vs `Query()`
 
-### 6. Lambda Functions and Sorting
+| Feature | `Path()` | `Query()` |
+|---|---|---|
+| Purpose | Identifies a resource | Controls filtering or sorting |
+| Location | Inside the URL path | After `?` in the URL |
+| Example | `/patient/1` | `/sort?sort_by=height` |
+| Typical use | Fetch one patient by ID | Sort patient records |
+| Default values | Path parameters are required | Query parameters can have defaults |
 
-A lambda function is a small anonymous function that can be written in one expression.
+**Simple rule:** Use path parameters to identify a resource and query parameters to customize the results.
 
-```python
-lambda patient: patient[sort_by]
-```
+## 9. Handling HTTP Errors
 
-Suppose a patient record looks like this:
-
-```json
-{
-    "id": 1,
-    "name": "Rahul",
-    "height": 175,
-    "weight": 70,
-    "bmi": 22.9
-}
-```
-
-When `sort_by` is `"height"`, the lambda behaves like:
-
-```python
-def get_sort_value(patient):
-    return patient["height"]
-```
-
-Therefore:
-
-```python
-sorted(
-    data,
-    key=lambda patient: patient[sort_by],
-    reverse=True
-)
-```
-
-means: sort the patient records using the selected field, in descending order.
-
-This technique can also be used when sorting products by price, employees by salary, or students by marks.
-
-### 7. HTTP Exception Handling
-
-`HTTPException` allows the API to return meaningful error responses.
+FastAPI provides `HTTPException` to return meaningful HTTP error responses.
 
 ```python
 raise HTTPException(
@@ -325,62 +270,45 @@ raise HTTPException(
 
 Common status codes:
 
-| Status code | Meaning | Example |
-|---|---|---|
-| `200` | OK | Records returned successfully |
-| `400` | Bad Request | Unsupported sorting field |
-| `404` | Not Found | Patient ID does not exist |
-| `422` | Unprocessable Entity | Invalid path parameter type |
-| `500` | Internal Server Error | Unexpected server-side failure |
+- `200 OK` — The request succeeded.
+- `400 Bad Request` — The request contains invalid input.
+- `404 Not Found` — The requested resource does not exist.
+- `422 Unprocessable Entity` — Request parameter validation failed.
 
-The project currently uses `400` for invalid sorting options and `404` when a patient cannot be found.
+## 10. Interactive API Documentation
 
-### 8. Interactive API Documentation
+FastAPI automatically generates interactive API documentation.
 
-FastAPI automatically generates API documentation from the application and its parameter definitions.
+**Swagger UI:** `http://127.0.0.1:8000/docs`
 
-After starting the server, open:
+**ReDoc:** `http://127.0.0.1:8000/redoc`
 
-- **Swagger UI:** http://127.0.0.1:8000/docs
-- **ReDoc:** http://127.0.0.1:8000/redoc
+You can inspect endpoints, enter parameters, execute requests, and view responses directly from your browser.
 
-Use Swagger UI to test the endpoints, provide path and query parameters, and inspect JSON responses and validation errors.
+## 11. What I Learned
 
-## Learning Roadmap
+By completing this lecture, I learned how to:
 
-The repository will grow as I continue learning FastAPI and backend development.
+- Set up a FastAPI development environment.
+- Create and run a basic API server.
+- Define GET endpoints.
+- Read structured data from a JSON file.
+- Retrieve individual records using path parameters.
+- Document parameters with `Path()` and `Query()`.
+- Validate input and handle errors.
+- Sort JSON records dynamically using Python's `sorted()` function and a lambda expression.
 
-- [x] Create a FastAPI application
-- [x] Create basic GET endpoints
-- [x] Read data from a JSON file
-- [x] Implement path parameters
-- [x] Fetch individual patient records by ID
-- [x] Implement query parameters
-- [x] Validate sorting fields and order
-- [x] Sort JSON records using `sorted()` and `lambda`
-- [ ] Implement POST endpoints to create records
-- [ ] Learn request bodies and Pydantic models
-- [ ] Implement PUT and PATCH endpoints
-- [ ] Implement DELETE endpoints
-- [ ] Learn routers and dependency injection
-- [ ] Connect a database such as PostgreSQL
-- [ ] Implement authentication and authorization
-- [ ] Write API tests
+## Next Steps
 
-## Useful Resources
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Python Documentation](https://docs.python.org/3/)
-- [Python JSON Documentation](https://docs.python.org/3/library/json.html)
-- [Python pathlib Documentation](https://docs.python.org/3/library/pathlib.html)
-
-## Author
-
-**Supain Nandy**
-
-- GitHub: [@SupainNandy](https://github.com/SupainNandy)
-- Repository: [FastAPI Learning](https://github.com/SupainNandy/fastApi)
+- Learn request bodies using Pydantic models.
+- Implement POST, PUT, and DELETE endpoints.
+- Add filtering and pagination.
+- Connect FastAPI to a database.
+- Build a complete CRUD application.
 
 ---
 
-*Learning Python backend development through practical implementation, one API at a time.*
+**Lecture:** 1 — FastAPI Fundamentals  
+**Level:** Beginner  
+**Framework:** FastAPI  
+**Language:** Python
