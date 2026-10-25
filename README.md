@@ -1,760 +1,386 @@
-# FastAPI — Beginner's Guide
+# FastAPI Learning — Python Backend Development
 
-A beginner-friendly guide to learning FastAPI with simple Python examples, validation techniques, and API development concepts.
+A hands-on journey into **FastAPI and REST API development using Python**. This repository contains practical examples, beginner-friendly code, and step-by-step exercises covering API fundamentals, JSON data handling, path parameters, query parameters, exception handling, and data sorting.
 
-## Table of Contents
+The goal is to build a strong foundation in backend development by implementing concepts through small, working examples.
 
-1. [What is FastAPI?](#1-what-is-fastapi)
-2. [Create Your First API](#2-create-your-first-api)
-3. [HTTP Methods](#3-http-methods)
-4. [Path Parameters](#4-path-parameters)
-5. [Path() Validation](#5-path-validation)
-6. [Query Parameters](#6-query-parameters)
-7. [Query() Validation](#7-query-validation)
-8. [Request Body with Pydantic](#8-request-body-with-pydantic)
-9. [Optional Parameters](#9-optional-parameters)
-10. [Response Models](#10-response-models)
-11. [HTTPException](#11-httpexception)
-12. [Status Codes](#12-status-codes)
-13. [Automatic API Documentation](#13-automatic-api-documentation)
-14. [Async and Await](#14-async-and-await)
-15. [Routers](#15-routers)
-16. [Middleware](#16-middleware)
-17. [CORS](#17-cors)
-18. [Dependency Injection](#18-dependency-injection)
-19. [Environment Variables](#19-environment-variables)
-20. [Database Integration](#20-database-integration)
-21. [Recommended Learning Roadmap](#21-recommended-learning-roadmap)
+## Tech Stack
 
----
+- **Python** — Programming language
+- **FastAPI** — Web framework for building REST APIs
+- **Uvicorn** — ASGI server for running the application
+- **JSON** — File-based data storage for learning API operations
+- **Git & GitHub** — Version control and project management
 
-## 1. What is FastAPI?
+## Project Structure
 
-FastAPI is a modern Python framework used to build APIs. It provides automatic data validation, asynchronous support, and interactive API documentation.
+```text
+fastApi/
+├── 1_Lecture/
+│   ├── main.py
+│   └── patient.json
+├── README.md
+└── ...
+```
 
-### Install Dependencies
+The structure above illustrates the current learning module. Other lecture folders may contain additional examples as the repository grows.
+
+## Getting Started
+
+### 1. Clone the Repository
 
 ```bash
-pip install fastapi uvicorn
+git clone https://github.com/SupainNandy/fastApi.git
+cd fastApi
 ```
 
-## 2. Create Your First API
+### 2. Navigate to the Learning Directory
 
-Create a file named `main.py`.
-
-```python
-from fastapi import FastAPI
-
-app = FastAPI()
-
-@app.get("/")
-def home():
-    return {"message": "Welcome to FastAPI"}
+```bash
+cd 1_Lecture
 ```
 
-### Run the Application
+### 3. Create a Virtual Environment
+
+**Ubuntu / Linux**
+
+```bash
+python3 -m venv myenv
+source myenv/bin/activate
+```
+
+**Windows**
+
+```bash
+python -m venv myenv
+myenv\Scripts\activate
+```
+
+### 4. Install Dependencies
+
+```bash
+python -m pip install fastapi uvicorn
+```
+
+### 5. Run the Application
+
+If your Python application is saved as `main.py`:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-- `main` — Python filename (`main.py`).
-- `app` — FastAPI application object.
-- `--reload` — restarts the server automatically when code changes.
+The server will usually run at `http://127.0.0.1:8000`.
 
-Open: `http://127.0.0.1:8000`
+## Concepts Learned
 
----
+### 1. Creating a FastAPI Application
 
-## 3. HTTP Methods
+FastAPI provides a simple way to create HTTP endpoints using Python functions and decorators.
 
-HTTP methods define the action an API performs.
+```python
+from fastapi import FastAPI
 
-| Method | Purpose |
+app = FastAPI(
+    title="My First FastAPI",
+    description="My first Python API",
+    version="1.0.0"
+)
+
+@app.get("/")
+def home():
+    return {"message": "FastAPI is running!"}
+```
+
+**What I learned:**
+- Creating a FastAPI application instance.
+- Using `@app.get()` to define GET endpoints.
+- Returning Python dictionaries as JSON responses.
+- Adding a title, description, and version to API documentation.
+
+### 2. Creating Multiple GET Endpoints
+
+Different endpoints can provide different information.
+
+| Endpoint | Purpose |
 |---|---|
-| `GET` | Retrieve data |
-| `POST` | Create data |
-| `PUT` | Replace or update a resource |
-| `PATCH` | Partially update a resource |
-| `DELETE` | Delete a resource |
+| `/` | Check whether the API is running |
+| `/about` | Return project information |
+| `/patient` | Fetch all patient records |
+| `/patient/{pid}` | Fetch a patient by ID |
+| `/sort` | Sort patient records by a selected field |
 
-### Example
-
-```python
-@app.get("/users")
-def get_users():
-    return {"message": "Get users"}
-
-@app.post("/users")
-def create_user():
-    return {"message": "User created"}
-
-@app.put("/users/1")
-def update_user():
-    return {"message": "User updated"}
-
-@app.delete("/users/1")
-def delete_user():
-    return {"message": "User deleted"}
-```
-
-These are basic examples; they return messages rather than performing database operations.
-
----
-
-## 4. Path Parameters
-
-Path parameters pass values directly through the URL to identify a particular resource.
-
-### Example
+Example:
 
 ```python
-@app.get("/users/{user_id}")
-def get_user(user_id: int):
-    return {"user_id": user_id}
-```
-
-**Request URL:**
-
-`http://127.0.0.1:8000/users/10`
-
-**Output:**
-
-```json
-{
-  "user_id": 10
-}
-```
-
-### Key Points
-
-- `{user_id}` defines a path parameter.
-- `user_id: int` specifies its data type.
-- FastAPI automatically converts and validates the value.
-
----
-
-## 5. Path() Validation
-
-`Path()` adds validation rules and documentation to path parameters.
-
-### Example
-
-```python
-from fastapi import Path
-
-@app.get("/products/{product_id}")
-def get_product(
-    product_id: int = Path(
-        ...,
-        gt=0,
-        description="The ID of the product"
-    )
-):
-    return {"product_id": product_id}
-```
-
-**Valid URL:**
-
-`http://127.0.0.1:8000/products/10`
-
-**Invalid URL:**
-
-`http://127.0.0.1:8000/products/0`
-
-The second request returns a validation error because the ID must be greater than zero.
-
-### Common Path() Arguments
-
-| Argument | Meaning |
-|---|---|
-| `...` | Parameter is required |
-| `gt=0` | Greater than 0 |
-| `ge=1` | Greater than or equal to 1 |
-| `lt=100` | Less than 100 |
-| `le=100` | Less than or equal to 100 |
-| `description` | Adds a description to API documentation |
-
-**Remember:** Path parameters are required because they are part of the URL path.
-
----
-
-## 6. Query Parameters
-
-Query parameters pass additional values through the URL, usually for filtering, searching, sorting, or pagination.
-
-They appear after `?` in the URL.
-
-### Example
-
-```python
-@app.get("/products")
-def get_products(
-    category: str = "all",
-    limit: int = 10
-):
+@app.get("/about")
+def about():
     return {
-        "category": category,
-        "limit": limit
+        "project": "FastAPI",
+        "status": "success"
     }
 ```
 
-**Request URL:**
+Each endpoint has a specific responsibility, which makes an API easier to organize and understand.
 
-`http://127.0.0.1:8000/products?category=books&limit=5`
+### 3. Reading JSON Data from a File
 
-**Output:**
+The project uses a `patient.json` file as its data source.
 
-```json
-{
-  "category": "books",
-  "limit": 5
-}
+```python
+import json
+from pathlib import Path
+
+def load_data():
+    file_path = Path(__file__).resolve().parent / "patient.json"
+
+    with open(file_path, "r", encoding="utf-8") as file:
+        return json.load(file)
 ```
 
-Here, `category` and `limit` are query parameters with default values.
+**How it works:**
 
----
+- `__file__` identifies the current Python file.
+- `Path(__file__).resolve().parent` identifies its containing directory.
+- `/ "patient.json"` builds the path to the JSON file.
+- `open()` opens the file in read mode.
+- `json.load(file)` converts JSON content into Python objects, such as lists and dictionaries.
 
-## 7. Query() Validation
+Using `Path` this way avoids depending on the terminal's current working directory.
 
-`Query()` adds validation rules and documentation to query parameters.
+The patient endpoint returns the loaded records:
 
-### Example
+```python
+@app.get("/patient")
+def fetch_data():
+    return load_data()
+```
+
+This approach is useful for learning how an API reads and returns structured data before introducing a database.
+
+### 4. Path Parameters
+
+A path parameter is a value embedded in the URL path. It is commonly used to identify one particular resource.
+
+**Example request:**
+
+```http
+GET /patient/3
+```
+
+**Implementation:**
+
+```python
+from fastapi import HTTPException, Path
+
+@app.get("/patient/{pid}")
+def fetch_patient_by_id(
+    pid: int = Path(
+        ...,
+        description="Id of the patient in the database"
+    )
+):
+    patients = load_data()
+
+    for patient in patients:
+        if patient["id"] == pid:
+            return patient
+
+    raise HTTPException(
+        status_code=404,
+        detail="Patient not found"
+    )
+```
+
+**What I learned:**
+
+- `{pid}` defines a dynamic segment in the URL.
+- `pid: int` declares the expected parameter type.
+- `Path(...)` marks the parameter as required and adds documentation.
+- The loop searches the loaded patient records for a matching ID.
+- `HTTPException` returns an appropriate error if no patient matches.
+
+If the patient exists, the endpoint returns that patient's record. Otherwise, it returns a `404 Not Found` response.
+
+FastAPI also validates the integer type automatically. For example, `/patient/abc` produces a validation error because `abc` is not an integer.
+
+### 5. Query Parameters
+
+Query parameters are passed after `?` in a URL. They are useful for filtering, searching, sorting, and pagination.
+
+In this project, query parameters control the sorting field and order.
+
+**Example requests:**
+
+```http
+GET /sort?sort_by=height&order=asc
+GET /sort?sort_by=weight&order=desc
+GET /sort?sort_by=bmi&order=asc
+```
+
+**Implementation:**
 
 ```python
 from fastapi import Query
 
-@app.get("/search")
-def search_products(
-    search: str = Query(
+@app.get("/sort")
+def sort_patients(
+    sort_by: str = Query(
         ...,
-        min_length=3,
-        max_length=20,
-        description="Search products by name"
+        description="Sort by height, weight, or bmi"
+    ),
+    order: str = Query(
+        "asc",
+        description="Sort in asc or desc order"
     )
 ):
-    return {
-        "search": search,
-        "message": "Products fetched successfully"
-    }
-```
+    valid_fields = ["height", "weight", "bmi"]
 
-**Valid URL:**
-
-`http://127.0.0.1:8000/search?search=laptop`
-
-**Output:**
-
-```json
-{
-  "search": "laptop",
-  "message": "Products fetched successfully"
-}
-```
-
-**Invalid URL:**
-
-`http://127.0.0.1:8000/search?search=ab`
-
-FastAPI returns a validation error because the search value contains fewer than three characters.
-
-### Common Query() Arguments
-
-| Argument | Meaning |
-|---|---|
-| `...` | Parameter is required |
-| `min_length=3` | Minimum string length |
-| `max_length=20` | Maximum string length |
-| `gt=0` | Value must be greater than 0 |
-| `ge=1` | Value must be greater than or equal to 1 |
-| `description` | Describes the parameter |
-| `pattern="^[a-z]+$"` | Validates a string against a regular expression |
-
-### Optional Query Parameter
-
-```python
-@app.get("/product-search")
-def search_products(
-    search: str | None = Query(
-        default=None,
-        min_length=3
-    )
-):
-    return {"search": search}
-```
-
-Both requests are valid:
-
-- `/product-search`
-- `/product-search?search=laptop`
-
-The first request returns `{"search": null}`.
-
-### Path() vs Query()
-
-| Feature | `Path()` | `Query()` |
-|---|---|---|
-| Value comes from | URL path | URL query string |
-| Example | `/users/10` | `/users?id=10` |
-| Common use | Identify a resource | Search or filter results |
-| Validation | Yes | Yes |
-
----
-
-## 8. Request Body with Pydantic
-
-A request body sends data to an API, commonly when creating or updating a resource.
-
-Pydantic models define the expected data structure and validate incoming values.
-
-### Example
-
-```python
-from pydantic import BaseModel
-
-class User(BaseModel):
-    name: str
-    age: int
-    email: str
-
-@app.post("/users")
-def create_user(user: User):
-    return {
-        "message": "User created",
-        "user": user
-    }
-```
-
-**Example JSON Request Body:**
-
-```json
-{
-  "name": "Rahul",
-  "age": 25,
-  "email": "rahul@example.com"
-}
-```
-
-FastAPI validates the incoming data automatically.
-
----
-
-## 9. Optional Parameters
-
-Optional parameters allow users to omit a value from a request.
-
-### Example
-
-```python
-@app.get("/user-search")
-def search_user(name: str | None = None):
-    return {"name": name}
-```
-
-**Example URLs:**
-
-- `/user-search?name=Rahul`
-- `/user-search`
-
-The second request returns:
-
-```json
-{
-  "name": null
-}
-```
-
-Here, `None` is the default value, and `str | None` allows either a string or `None`.
-
----
-
-## 10. Response Models
-
-`response_model` defines and validates the structure of the response returned by an endpoint.
-
-### Example
-
-```python
-from pydantic import BaseModel
-
-class UserResponse(BaseModel):
-    name: str
-    age: int
-
-@app.get("/user", response_model=UserResponse)
-def get_user():
-    return {
-        "name": "Rahul",
-        "age": 25,
-        "password": "secret"
-    }
-```
-
-**Output:**
-
-```json
-{
-  "name": "Rahul",
-  "age": 25
-}
-```
-
-The extra `password` field is excluded from the response.
-
-**Important:** Response models help control API output and prevent unintended fields from being exposed.
-
----
-
-## 11. HTTPException
-
-`HTTPException` returns an HTTP error when a request cannot be completed.
-
-### Example
-
-```python
-from fastapi import HTTPException
-
-@app.get("/users/{user_id}")
-def get_user(user_id: int):
-    if user_id != 1:
+    if sort_by not in valid_fields:
         raise HTTPException(
-            status_code=404,
-            detail="User not found"
+            status_code=400,
+            detail=f"Invalid field; select from {valid_fields}"
         )
 
-    return {
-        "user_id": user_id,
-        "name": "Rahul"
-    }
+    if order not in ["asc", "desc"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid order; select asc or desc"
+        )
+
+    data = load_data()
+
+    sorted_flag = True if order == "desc" else False
+
+    return sorted(
+        data,
+        key=lambda patient: patient[sort_by],
+        reverse=sorted_flag
+    )
 ```
 
-- `/users/1` returns the user.
-- `/users/2` returns a `404 Not Found` error.
+**What I learned:**
 
-### Common Error Status Codes
+- `Query(...)` makes `sort_by` required.
+- `Query("asc")` sets ascending order as the default.
+- A list of valid fields prevents sorting by unsupported fields.
+- The API validates whether the requested order is `asc` or `desc`.
+- Python's `sorted()` returns a new sorted list without changing the original list.
+- `lambda` provides a compact function for selecting the sorting value.
+- `reverse=True` sorts in descending order.
 
-| Code | Meaning |
-|---|---|
-| `400` | Bad Request |
-| `401` | Unauthorized |
-| `403` | Forbidden |
-| `404` | Not Found |
-| `422` | Validation Error |
-| `500` | Internal Server Error |
+For example, `/sort?sort_by=height&order=desc` returns patient records ordered from greatest to smallest height.
 
----
+### 6. Lambda Functions and Sorting
 
-## 12. Status Codes
-
-Status codes indicate the result of an HTTP request.
-
-### Example
+A lambda function is a small anonymous function that can be written in one expression.
 
 ```python
-from fastapi import status
-
-@app.post(
-    "/items",
-    status_code=status.HTTP_201_CREATED
-)
-def create_item():
-    return {"message": "Item created"}
+lambda patient: patient[sort_by]
 ```
 
-The API returns status code `201 Created`.
+Suppose a patient record looks like this:
 
-### Common Status Codes
+```json
+{
+    "id": 1,
+    "name": "Rahul",
+    "height": 175,
+    "weight": 70,
+    "bmi": 22.9
+}
+```
 
-| Code | Meaning |
-|---|---|
-| `200` | OK |
-| `201` | Created |
-| `204` | No Content |
-| `400` | Bad Request |
-| `401` | Unauthorized |
-| `403` | Forbidden |
-| `404` | Not Found |
-| `422` | Validation Error |
-| `500` | Internal Server Error |
+When `sort_by` is `"height"`, the lambda behaves like:
 
----
+```python
+def get_sort_value(patient):
+    return patient["height"]
+```
 
-## 13. Automatic API Documentation
+Therefore:
 
-FastAPI automatically generates interactive API documentation.
+```python
+sorted(
+    data,
+    key=lambda patient: patient[sort_by],
+    reverse=True
+)
+```
 
-Start the server and open the following URLs:
+means: sort the patient records using the selected field, in descending order.
+
+This technique can also be used when sorting products by price, employees by salary, or students by marks.
+
+### 7. HTTP Exception Handling
+
+`HTTPException` allows the API to return meaningful error responses.
+
+```python
+raise HTTPException(
+    status_code=404,
+    detail="Patient not found"
+)
+```
+
+Common status codes:
+
+| Status code | Meaning | Example |
+|---|---|---|
+| `200` | OK | Records returned successfully |
+| `400` | Bad Request | Unsupported sorting field |
+| `404` | Not Found | Patient ID does not exist |
+| `422` | Unprocessable Entity | Invalid path parameter type |
+| `500` | Internal Server Error | Unexpected server-side failure |
+
+The project currently uses `400` for invalid sorting options and `404` when a patient cannot be found.
+
+### 8. Interactive API Documentation
+
+FastAPI automatically generates API documentation from the application and its parameter definitions.
+
+After starting the server, open:
 
 - **Swagger UI:** http://127.0.0.1:8000/docs
 - **ReDoc:** http://127.0.0.1:8000/redoc
 
-You can inspect endpoints, view request and response schemas, and test API requests directly in your browser.
-
----
-
-## 14. Async and Await
-
-`async def` allows you to create asynchronous endpoints. It is useful for I/O operations when working with compatible asynchronous libraries.
-
-### Example
-
-```python
-@app.get("/hello")
-async def hello():
-    return {"message": "Hello, FastAPI"}
-```
-
-Use `async def` with asynchronous operations. Normal `def` is also valid for regular endpoints.
-
-**Important:** Declaring a function `async` does not automatically make blocking operations non-blocking.
-
----
-
-## 15. Routers
-
-`APIRouter` helps organize endpoints into separate files as a project grows.
-
-### users.py
-
-```python
-from fastapi import APIRouter
-
-router = APIRouter()
-
-@router.get("/users")
-def get_users():
-    return [
-        {"id": 1, "name": "Rahul"}
-    ]
-```
-
-### main.py
-
-```python
-from fastapi import FastAPI
-from users import router
-
-app = FastAPI()
-
-app.include_router(router)
-```
-
-Now `/users` is available through the main application.
-
-**Benefit:** Routers keep your code organized and easier to maintain.
-
----
-
-## 16. Middleware
-
-Middleware runs around requests and responses. It is useful for request timing, logging, and other shared operations.
-
-### Example
-
-```python
-import time
-from fastapi import Request
-
-@app.middleware("http")
-async def add_process_time(
-    request: Request,
-    call_next
-):
-    start = time.time()
-
-    response = await call_next(request)
-
-    process_time = time.time() - start
-    response.headers["X-Process-Time"] = str(process_time)
-
-    return response
-```
-
-This example adds an `X-Process-Time` header containing the request processing duration in seconds.
-
----
-
-## 17. CORS
-
-CORS stands for Cross-Origin Resource Sharing. It controls which browser-based frontend origins can access your API.
-
-### Example
-
-```python
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-```
-
-Replace the example origin with your actual frontend URL.
-
-**Security tip:** Avoid allowing every origin in production unless it is genuinely required.
-
----
-
-## 18. Dependency Injection
-
-`Depends()` allows FastAPI to provide reusable dependencies to endpoints.
-
-Dependencies are useful for authentication, database sessions, and shared logic.
-
-### Example
-
-```python
-from fastapi import Depends
-
-def common_params(limit: int = 10):
-    return {"limit": limit}
-
-@app.get("/items")
-def get_items(
-    params: dict = Depends(common_params)
-):
-    return params
-```
-
-**Request URL:**
-
-`http://127.0.0.1:8000/items?limit=5`
-
-**Output:**
-
-```json
-{
-  "limit": 5
-}
-```
-
-FastAPI calls `common_params()` and passes its result to the endpoint.
-
----
-
-## 19. Environment Variables
-
-Environment variables store configuration outside your source code, including application settings and database connection details.
-
-### Install
-
-```bash
-pip install python-dotenv
-```
-
-### .env
-
-```env
-APP_NAME=My FastAPI App
-```
-
-### main.py
-
-```python
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-app_name = os.getenv("APP_NAME", "FastAPI")
-
-app = FastAPI(title=app_name)
-```
-
-### .gitignore
-
-```gitignore
-.env
-myenv/
-__pycache__/
-*.pyc
-```
-
-**Security tip:** Never commit passwords, API keys, tokens, or other secrets to GitHub.
-
----
-
-## 20. Database Integration
-
-FastAPI can connect to databases such as PostgreSQL, MySQL, and SQLite through appropriate database libraries.
-
-### Typical Database Workflow
-
-1. Receive a request.
-2. Validate the incoming data.
-3. Perform a database operation.
-4. Return the result.
-
-### Common Database Tools
-
-| Tool | Purpose |
-|---|---|
-| PostgreSQL | Relational database |
-| MySQL | Relational database |
-| SQLite | Lightweight database |
-| SQLAlchemy | Python ORM and SQL toolkit |
-| SQLModel | SQL database library built on Pydantic and SQLAlchemy |
-
-A production application should manage database sessions and connections correctly and keep credentials in environment variables.
-
----
-
-## 21. Recommended Learning Roadmap
-
-Follow this order to build a strong foundation in FastAPI.
-
-- [ ] Install Python, FastAPI, and Uvicorn.
-- [ ] Create your first API.
-- [ ] Learn HTTP methods.
-- [ ] Practice path parameters.
-- [ ] Understand `Path()` validation.
-- [ ] Learn query parameters.
-- [ ] Understand `Query()` validation.
-- [ ] Validate request bodies with Pydantic.
-- [ ] Learn optional parameters and response models.
-- [ ] Handle errors using `HTTPException`.
-- [ ] Understand HTTP status codes.
-- [ ] Organize endpoints using `APIRouter`.
-- [ ] Learn dependency injection and middleware.
-- [ ] Configure CORS and environment variables.
-- [ ] Connect PostgreSQL.
-- [ ] Implement CRUD operations.
-- [ ] Learn authentication and authorization.
-- [ ] Write API tests using `pytest` and FastAPI's `TestClient`.
-
----
-
-## Practice Project: Patient Management API
-
-Build a Patient Management API to practice the concepts covered in this guide.
-
-### Suggested Features
-
-- Create a patient.
-- Retrieve all patients.
-- Retrieve a patient by ID.
-- Search patients by name.
-- Filter patients by city.
-- Update patient details.
-- Delete a patient.
-- Validate patient data using Pydantic.
-- Store patient records in PostgreSQL.
-
-Start with an in-memory Python list, then connect PostgreSQL when you understand the fundamentals.
-
----
+Use Swagger UI to test the endpoints, provide path and query parameters, and inspect JSON responses and validation errors.
+
+## Learning Roadmap
+
+The repository will grow as I continue learning FastAPI and backend development.
+
+- [x] Create a FastAPI application
+- [x] Create basic GET endpoints
+- [x] Read data from a JSON file
+- [x] Implement path parameters
+- [x] Fetch individual patient records by ID
+- [x] Implement query parameters
+- [x] Validate sorting fields and order
+- [x] Sort JSON records using `sorted()` and `lambda`
+- [ ] Implement POST endpoints to create records
+- [ ] Learn request bodies and Pydantic models
+- [ ] Implement PUT and PATCH endpoints
+- [ ] Implement DELETE endpoints
+- [ ] Learn routers and dependency injection
+- [ ] Connect a database such as PostgreSQL
+- [ ] Implement authentication and authorization
+- [ ] Write API tests
 
 ## Useful Resources
 
-- [FastAPI Official Documentation](https://fastapi.tiangolo.com/)
-- [Python Official Documentation](https://docs.python.org/3/)
-- [Pydantic Documentation](https://docs.pydantic.dev/)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Python Documentation](https://docs.python.org/3/)
+- [Python JSON Documentation](https://docs.python.org/3/library/json.html)
+- [Python pathlib Documentation](https://docs.python.org/3/library/pathlib.html)
+
+## Author
+
+**Supain Nandy**
+
+- GitHub: [@SupainNandy](https://github.com/SupainNandy)
+- Repository: [FastAPI Learning](https://github.com/SupainNandy/fastApi)
 
 ---
 
-**Learning tip:** Practice each concept by creating a small endpoint and testing it at `/docs`. Understanding how requests, validation, and responses work is more useful than memorizing syntax.
+*Learning Python backend development through practical implementation, one API at a time.*
