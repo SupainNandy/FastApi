@@ -1,5 +1,5 @@
 
-readme = r'''# Pydantic Crash Course — FastAPI Notes
+Pydantic Crash Course — FastAPI Notes
 
 Beginner-friendly notes on Pydantic, Python data validation, and using Pydantic models with FastAPI.
 
