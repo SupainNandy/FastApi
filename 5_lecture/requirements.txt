@@ -1,5 +1,7 @@
 # Use Python 3.13; model.pkl was serialized with scikit-learn 1.6.1.
 fastapi
 pandas
+requests
 scikit-learn==1.6.1
+streamlit
 uvicorn
