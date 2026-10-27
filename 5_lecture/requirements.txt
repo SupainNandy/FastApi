@@ -1,0 +1,5 @@
+# Use Python 3.13; model.pkl was serialized with scikit-learn 1.6.1.
+fastapi
+pandas
+scikit-learn==1.6.1
+uvicorn
