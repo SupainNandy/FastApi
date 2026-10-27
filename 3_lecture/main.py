@@ -1,41 +1,45 @@
 
-from typing import Annotated,Literal
-
-from fastapi import FastAPI, HTTPException, Path, Query
+from typing import Annotated, Literal
 import json
 from pathlib import Path as FilePath
+
+from fastapi import FastAPI, HTTPException, Path, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field, computed_field
 
-# //Pydantic model for patient data validation
+
+# Pydantic model for validating patient data
 class Patient(BaseModel):
-    id: Annotated[int, Field(..., description="Unique identifier for the patient")]
+    id: Annotated[int, Field(..., description="Unique patient identifier")]
     name: Annotated[str, Field(..., description="Name of the patient")]
-    email: EmailStr = Annotated[EmailStr, Field(..., description="Email address of the patient")]
-    age: Annotated[int, Field(..., gt=0, lt=120, description="Age of the patient, must be a non-negative integer")]
-    height: Annotated[float, Field(..., gt=0, description="Height of the patient in centimeters, must be a meters")]
-    weight: Annotated[float, Field(..., gt=0, description="Weight of the patient in kilograms, must be a KG")]
-    gender: Annotated[Literal["Male", "Female", "Other"], Field(..., description="Gender of the patient, must be 'Male', 'Female', or 'Other'")]
+    email: Annotated[EmailStr, Field(..., description="Valid email address")]
+    age: Annotated[int, Field(..., gt=0, lt=120, description="Age between 1 and 119")]
+    height: Annotated[float, Field(..., gt=0, description="Height in centimeters")]
+    weight: Annotated[float, Field(..., gt=0, description="Weight in kilograms")]
+    gender: Annotated[
+        Literal["Male", "Female", "Other"],
+        Field(..., description="Gender of the patient")
+    ]
 
     @computed_field
     @property
     def bmi(self) -> float:
-        # Calculate BMI using the formula: weight (kg) / (height (m))^2
-        height_in_meters = self.height / 100  # Convert height from cm to meters
-        return round(self.weight / (height_in_meters ** 2), 2)  # Round to 2 decimal places
-    
+        # Convert height from centimeters to meters and calculate BMI.
+        height_in_meters = self.height / 100
+        return round(self.weight / (height_in_meters ** 2), 2)
+
     @computed_field
     @property
     def verdict(self) -> str:
-        # Determine the BMI category based on the calculated BMI value
-        bmi_value = self.bmi
-        if bmi_value < 18.5:
+        # Categorize BMI using standard adult BMI thresholds.
+        if self.bmi < 18.5:
             return "Underweight"
-        elif 18.5 <= bmi_value < 25:
+        elif self.bmi < 25:
             return "Normal weight"
-        elif 25 <= bmi_value < 30:
+        elif self.bmi < 30:
             return "Overweight"
-        else:
-            return "Obese"
+        return "Obese"
+
 
 app = FastAPI(
     title="My First FastAPI",
@@ -43,74 +47,117 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# json file reading
+
+# Read patient records from patient.json.
 def load_data():
     file_path = FilePath(__file__).resolve().parent / "patient.json"
+
     with open(file_path, "r", encoding="utf-8") as file:
         return json.load(file)
 
-# Load Data
+
+# Save patient records to patient.json.
 def save_data(data):
     file_path = FilePath(__file__).resolve().parent / "patient.json"
+
     with open(file_path, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4)
+
 
 @app.get("/")
 def home():
     return {"message": "FastAPI is running!"}
 
+
 @app.get("/about")
 def about():
     return {"project": "FastAPI", "status": "success"}
+
 
 @app.get("/patient")
 def fetch_data():
     return load_data()
 
-#Dynamic Api params, Path parameters
+
+# Fetch a patient using a path parameter.
 @app.get("/patient/{pid}")
-def fetch_patient_by_id(pid: int = Path(..., description="Id of the patient in the database")):
+def fetch_patient_by_id(
+    pid: Annotated[int, Path(..., description="Patient ID")]
+):
     patients = load_data()
+
     for patient in patients:
         if patient["id"] == pid:
             return patient
+
     raise HTTPException(status_code=404, detail="Patient not found")
 
 
-#Query Parameters
-@app.get('/sort')
+# Sort patients using query parameters.
+@app.get("/sort")
 def sort_patients(
-    sort_by: str = Query(..., description="Sort by height, weight, or bmi"),
-    order: str = Query("asc", description="Sort in asc or desc order"),
+    sort_by: Annotated[
+        str, Query(..., description="Sort by height, weight, or bmi")
+    ],
+    order: Annotated[
+        str, Query(description="Sort order: asc or desc")
+    ] = "asc",
 ):
-
     valid_fields = ["height", "weight", "bmi"]
 
     if sort_by not in valid_fields:
-        raise HTTPException(status_code=400, detail=f"Invalid field; select from {valid_fields}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid field; select from {valid_fields}"
+        )
+
+    order = order.lower()
 
     if order not in ["asc", "desc"]:
-        raise HTTPException(status_code=400, detail="Invalid order; select asc or desc")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid order; select asc or desc"
+        )
 
-    data = load_data()
-    sorted_flag = True if order=='desc' else False
+    patients = load_data()
 
-    return sorted(data, key=lambda patient: patient[sort_by], reverse=sorted_flag)
+    # Calculate BMI dynamically so older JSON records work too.
+    def get_sort_value(patient):
+        if sort_by == "bmi":
+            height_m = patient["height"] / 100
+            return patient["weight"] / (height_m ** 2)
+
+        return patient[sort_by]
+
+    return sorted(
+        patients,
+        key=get_sort_value,
+        reverse=(order == "desc")
+    )
 
 
+# Create a new patient.
+@app.post("/create", status_code=201)
+def create_patient(patient: Patient):
+    patients = load_data()
 
-#POST endpoint to add a new patient
-@app.post("/create"):
-def create_patient(patient: Patient):#pydantic object 
-    #load data from json file
-    patients = load_data() #python dictionary
-
-    #check if patient with same id already exists
+    # Prevent duplicate patient IDs.
     for existing_patient in patients:
         if existing_patient["id"] == patient.id:
-            raise HTTPException(status_code=400, detail="Patient with this ID already exists")
-    #Add new patient to the list
-    patients.model.dump(id=patient.id, name=patient.name, email=patient.email, age=patient.age, height=patient.height, weight=patient.weight, gender=patient.gender)
+            raise HTTPException(
+                status_code=400,
+                detail="Patient with this ID already exists"
+            )
 
-    #save into json file
+    # model_dump() includes the computed BMI and verdict fields.
+    patients.append(patient.model_dump())
+
     save_data(patients)
+
+    return JSONResponse(
+        status_code=201,
+        content={
+            "message": "Patient created successfully",
+            "patient": patient.model_dump()
+        }
+    )
