@@ -84,6 +84,7 @@ class UserInput(BaseModel):
             return "middle_aged"
         return "senior"
 
+
     # Determine the city tier
     @computed_field
     @property
